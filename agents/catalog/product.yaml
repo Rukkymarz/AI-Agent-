@@ -1,0 +1,16 @@
+department: product
+agents:
+  - id: product-manager
+    name: Product Manager Agent
+    description: PRDs, user stories, prioritisation (RICE), roadmap proposals.
+    model_task: business
+    permissions: [task:read, knowledge:read, ticket:write, content:draft]
+    tools: [ticket.create, content.draft]
+    keywords: [prd, user story, roadmap, feature request, prioritise, rice]
+  - id: project-manager
+    name: Project Manager Agent
+    description: Timelines, dependencies, status reports, RAID logs.
+    model_task: business
+    permissions: [task:read, knowledge:read, ticket:write]
+    tools: [ticket.create, report.publish]
+    keywords: [timeline, milestone, gantt, status report, raid, dependency]

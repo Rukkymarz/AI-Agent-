@@ -1,0 +1,10 @@
+# Kubernetes base (Phase 8). Data services (Postgres, Redis, Vault, Keycloak) should use operators/managed services:
+#   CloudNativePG + pgvector, Redis operator / managed Redis, Vault Helm chart (HA raft), Keycloak operator.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: aicos
+resources: [namespace.yaml, api.yaml, networkpolicy.yaml]
+images:
+  - name: aicompany-os/api
+    newName: ghcr.io/aicompany-os/aicompany-os/api
+    newTag: v0.1.0   # replace with @sha256 digest

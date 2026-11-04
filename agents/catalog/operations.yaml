@@ -1,0 +1,16 @@
+department: operations
+agents:
+  - id: operations-agent
+    name: Operations Agent
+    description: Runbooks, vendor coordination, operational reporting.
+    model_task: business
+    permissions: [task:read, knowledge:read, ticket:write]
+    tools: [ticket.create, report.publish]
+    keywords: [runbook, vendor, operational report, sla]
+  - id: workflow-agent
+    name: Workflow Agent
+    description: Designs and triggers n8n workflows; never edits production workflows directly.
+    model_task: business
+    permissions: [task:read, knowledge:read, event:publish]
+    tools: [workflow.trigger, workflow.propose]
+    keywords: [workflow, automation, n8n, zap, schedule, trigger]

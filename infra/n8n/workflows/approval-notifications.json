@@ -1,0 +1,20 @@
+{
+  "name": "AICOS - Approval requested -> Slack + email",
+  "nodes": [
+    {"parameters": {"httpMethod": "POST", "path": "aicos-approval", "authentication": "headerAuth", "responseMode": "onReceived"},
+     "name": "AICOS Event Webhook", "type": "n8n-nodes-base.webhook", "typeVersion": 2, "position": [0, 0]},
+    {"parameters": {"conditions": {"string": [{"value1": "={{$json.body.type}}", "value2": "ApprovalRequested"}]}},
+     "name": "Is ApprovalRequested", "type": "n8n-nodes-base.if", "typeVersion": 1, "position": [220, 0]},
+    {"parameters": {"channel": "#aicos-approvals",
+                    "text": "=:rotating_light: Approval needed ({{$json.body.payload.risk}}): {{$json.body.payload.action}}\nRationale: {{$json.body.payload.rationale}}\nReview: https://console.{{$env.DOMAIN}}/approvals/{{$json.body.payload.proposal_id}}"},
+     "name": "Notify Slack", "type": "n8n-nodes-base.slack", "typeVersion": 2, "position": [440, -80]},
+    {"parameters": {"toEmail": "={{$env.APPROVERS_EMAIL}}", "subject": "=[AICOS] Approval required: {{$json.body.payload.action}}",
+                    "text": "=Review proposal {{$json.body.payload.proposal_id}} in the console. Do not approve from email."},
+     "name": "Email Approvers", "type": "n8n-nodes-base.emailSend", "typeVersion": 2, "position": [440, 80]}
+  ],
+  "connections": {
+    "AICOS Event Webhook": {"main": [[{"node": "Is ApprovalRequested", "type": "main", "index": 0}]]},
+    "Is ApprovalRequested": {"main": [[{"node": "Notify Slack", "type": "main", "index": 0}, {"node": "Email Approvers", "type": "main", "index": 0}]]}
+  },
+  "settings": {"executionOrder": "v1"}
+}

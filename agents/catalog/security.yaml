@@ -1,0 +1,37 @@
+department: security
+agents:
+  - id: security-architect
+    name: Security Architect Agent
+    description: Threat modelling (STRIDE), secure design reviews.
+    model_task: reasoning
+    permissions: [task:read, knowledge:read, ticket:write]
+    tools: [ticket.create]
+    keywords: [threat model, stride, secure design, attack surface]
+  - id: vulnerability-agent
+    name: Vulnerability Agent
+    description: Triage of Trivy/Semgrep/CodeQL/ZAP findings; proposes fixes as PRs.
+    model_task: coding
+    permissions: [task:read, knowledge:read, ticket:write, code:pr_create]
+    tools: [ticket.create, code.pull_request]
+    keywords: [cve, vulnerability, trivy, semgrep, codeql, zap, dependency]
+  - id: audit-agent
+    name: Audit Agent
+    description: Audit-trail analysis and integrity verification reports.
+    model_task: reasoning
+    permissions: [task:read, knowledge:read]
+    tools: [report.publish]
+    keywords: [audit trail, audit log, evidence, forensic]
+  - id: compliance-agent
+    name: Compliance Agent
+    description: SOC2/NIST/OWASP/GDPR/CCPA control mapping and gap analysis.
+    model_task: reasoning
+    permissions: [task:read, knowledge:read]
+    tools: [report.publish]
+    keywords: [soc2, nist, gdpr, ccpa, owasp, compliance, control]
+  - id: incident-response
+    name: Incident Response Agent
+    description: Incident timelines, containment proposals, post-mortems.
+    model_task: reasoning
+    permissions: [task:read, knowledge:read, ticket:write, event:publish]
+    tools: [incident.declare, ticket.create, security.alert]
+    keywords: [incident, breach, containment, postmortem, post-mortem]

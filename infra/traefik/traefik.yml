@@ -1,0 +1,29 @@
+# Traefik v3 static config. TLS everywhere; dashboard disabled; only labelled containers exposed.
+entryPoints:
+  web:
+    address: ":80"
+    http:
+      redirections:
+        entryPoint: { to: websecure, scheme: https, permanent: true }
+  websecure:
+    address: ":443"
+    http:
+      tls: { certResolver: letsencrypt }
+      middlewares: [secure-headers@file, ratelimit@file]
+providers:
+  docker:
+    exposedByDefault: false
+    network: aicos-edge
+  file:
+    filename: /etc/traefik/dynamic.yml
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: "${ACME_EMAIL}"
+      storage: /letsencrypt/acme.json
+      tlsChallenge: {}
+api: { dashboard: false }
+log: { level: INFO }
+accessLog: { format: json, fields: { headers: { defaultMode: drop } } }
+metrics:
+  prometheus: { entryPoint: metrics }

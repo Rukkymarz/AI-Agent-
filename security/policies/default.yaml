@@ -1,0 +1,34 @@
+# Declarative policy rules. Effects: allow | deny | require_approval. DENY always wins.
+# Rules can only ADD restrictions on top of the built-in critical-permission gate.
+rules:
+  - id: single-email-external-review
+    description: Individual external emails drafted by agents are human-reviewed.
+    effect: require_approval
+    actions: ["email.send_single"]
+    principal_types: [agent]
+  - id: finance-hard-cap
+    description: Agents may never propose payments above $50,000 (humans must originate).
+    effect: deny
+    actions: ["finance.payment"]
+    principal_types: [agent]
+    when:
+      - {field: payload.amount, op: gt, value: 50000}
+  - id: change-freeze
+    description: Change freeze window flag set by release management.
+    effect: deny
+    actions: ["deploy.production"]
+    when:
+      - {field: payload.change_freeze, op: eq, value: true}
+  - id: campaign-size-review
+    description: Campaigns above 10k recipients always need approval (also gated as critical).
+    effect: require_approval
+    actions: ["campaign.send"]
+    when:
+      - {field: payload.recipients, op: gt, value: 10000}
+  - id: block-prod-db-from-agents
+    description: Agents never touch the production database directly.
+    effect: deny
+    actions: ["sql.query_readonly"]
+    principal_types: [agent]
+    when:
+      - {field: resource, op: eq, value: "prod-primary"}

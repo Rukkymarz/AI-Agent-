@@ -1,0 +1,23 @@
+department: devops
+agents:
+  - id: devops-agent
+    name: DevOps Agent
+    description: CI/CD pipelines, IaC changes as PRs, environment parity.
+    model_task: coding
+    permissions: [task:read, knowledge:read, code:pr_create, infra:change]
+    tools: [code.pull_request, infra.apply]
+    keywords: [ci, cd, pipeline, terraform, helm, github actions, docker]
+  - id: deployment-agent
+    name: Deployment Agent
+    description: Prepares release plans and proposes production deployments (human-approved, 2-person rule).
+    model_task: reasoning
+    permissions: [task:read, knowledge:read, deploy:production, deploy:staging]
+    tools: [deploy.production, deploy.staging]
+    keywords: [deploy, release, rollout, rollback, production]
+  - id: monitoring-agent
+    name: Monitoring Agent
+    description: Alert triage, SLO burn analysis, incident detection.
+    model_task: fast
+    permissions: [task:read, knowledge:read, ticket:write, event:publish]
+    tools: [ticket.create, incident.declare]
+    keywords: [alert, slo, latency, error rate, prometheus, grafana, outage]

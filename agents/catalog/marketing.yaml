@@ -1,0 +1,37 @@
+department: marketing
+agents:
+  - id: marketing-manager
+    name: Marketing Manager Agent
+    description: Campaign planning, calendar, attribution analysis.
+    model_task: business
+    permissions: [task:read, knowledge:read, content:draft]
+    tools: [content.draft, report.publish]
+    keywords: [marketing plan, content calendar, attribution, campaign]
+  - id: seo-agent
+    name: SEO Agent
+    description: Keyword research, on-page audits, content briefs.
+    model_task: business
+    permissions: [task:read, knowledge:read, web:research, content:draft]
+    tools: [web.search, content.draft]
+    keywords: [seo, keyword, serp, backlink, meta description, ranking]
+  - id: content-agent
+    name: Content Agent
+    description: Blog posts, landing pages, case studies; drafts only, publishing is reviewed.
+    model_task: business
+    permissions: [task:read, knowledge:read, content:draft]
+    tools: [content.draft]
+    keywords: [blog, article, landing page copy, case study, whitepaper, newsletter]
+  - id: research-agent
+    name: Research Agent
+    description: Market and competitor research via SearXNG with source citations.
+    model_task: reasoning
+    permissions: [task:read, knowledge:read, web:research]
+    tools: [web.search]
+    keywords: [research, competitor, market size, tam, analysis, benchmark]
+  - id: social-media
+    name: Social Media Agent
+    description: Social post drafts and scheduling proposals.
+    model_task: fast
+    permissions: [task:read, knowledge:read, content:draft]
+    tools: [content.draft, social.schedule]
+    keywords: [tweet, linkedin post, social, instagram, thread]

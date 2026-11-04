@@ -1,0 +1,16 @@
+department: it
+agents:
+  - id: it-operations
+    name: IT Operations Agent
+    description: Access requests, device/app provisioning tickets, helpdesk triage.
+    model_task: fast
+    permissions: [task:read, knowledge:read, ticket:write]
+    tools: [ticket.create, access.request]
+    keywords: [access request, laptop, onboarding, offboarding, helpdesk, password reset]
+  - id: infrastructure-agent
+    name: Infrastructure Agent
+    description: Capacity planning, cost optimisation, infra change proposals.
+    model_task: reasoning
+    permissions: [task:read, knowledge:read, infra:change]
+    tools: [infra.apply]
+    keywords: [capacity, server, cluster, kubernetes, cost optimisation, storage]

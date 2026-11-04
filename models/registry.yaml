@@ -1,0 +1,19 @@
+# LLM registry. Add a model here (or via an llm_provider plugin) — no code change required.
+models:
+  - {name: "deepseek-coder-v2:16b", provider: ollama, tasks: [coding], context_window: 131072, quality: 8}
+  - {name: "qwen3-coder:30b",       provider: ollama, tasks: [coding], context_window: 262144, quality: 9}
+  - {name: "deepseek-r1:14b",       provider: ollama, tasks: [reasoning, coding], context_window: 131072, quality: 8}
+  - {name: "qwen3:14b",             provider: ollama, tasks: [business, general, reasoning, coding], context_window: 40960, quality: 8}
+  - {name: "llama3.1:8b",           provider: ollama, tasks: [general, business], context_window: 131072, quality: 6}
+  - {name: "mistral:7b",            provider: ollama, tasks: [fast, general], context_window: 32768, quality: 5}
+  - {name: "gemma3:4b",             provider: ollama, tasks: [fast], context_window: 131072, quality: 4}
+  - {name: "bge-m3",                provider: ollama, tasks: [embedding], context_window: 8192}
+  - {name: "nomic-embed-text",      provider: ollama, tasks: [embedding], context_window: 8192}
+  - {name: "jina/jina-embeddings-v2-base-en", provider: ollama, tasks: [embedding], context_window: 8192}
+routes:
+  coding:    ["deepseek-coder-v2:16b", "qwen3-coder:30b", "qwen3:14b"]
+  reasoning: ["deepseek-r1:14b", "qwen3:14b"]
+  business:  ["qwen3:14b", "llama3.1:8b"]
+  fast:      ["mistral:7b", "gemma3:4b"]
+  general:   ["qwen3:14b", "llama3.1:8b", "mistral:7b"]
+  embedding: ["bge-m3", "nomic-embed-text", "jina/jina-embeddings-v2-base-en"]

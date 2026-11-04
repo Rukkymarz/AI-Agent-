@@ -1,0 +1,7 @@
+# Security-sensitive paths require security-team review (enforced via branch protection).
+/packages/core/src/aicos/security/      @aicompany-os/security
+/packages/core/src/aicos/approvals/     @aicompany-os/security
+/packages/core/src/aicos/plugins/       @aicompany-os/security
+/security/                              @aicompany-os/security
+/infra/                                 @aicompany-os/platform @aicompany-os/security
+/.github/workflows/                     @aicompany-os/platform @aicompany-os/security

@@ -1,0 +1,49 @@
+api_version: aicos.io/v1
+name: hubspot-sync
+namespace: HubSpot
+version: 0.1.0
+publisher: aicompany-os
+description: Reference plugin. Pushes qualified leads to HubSpot CRM through a governed
+  action and enriches LeadFound events.
+license: MIT
+homepage: https://github.com/aicompany-os/aicompany-os
+kinds:
+- action
+- event_subscriber
+- agent
+entrypoint: hubspot_sync.plugin:HubSpotSyncPlugin
+aicos_version: '>=0.1.0,<0.2.0'
+isolation: in_process
+capabilities:
+- events:subscribe:LeadFound
+- events:publish:HubSpot.ContactQueued
+- actions:register:hubspot_sync.upsert_contact
+- net:egress:api.hubapi.com
+- secrets:read:plugins/hubspot
+- agents:register
+actions:
+- action: hubspot_sync.upsert_contact
+  permission: crm:write
+  description: Create or update a HubSpot contact from a qualified lead.
+agents:
+- id: hubspot-sync-enricher
+  name: HubSpot Enrichment Agent
+  department: sales
+  description: Normalises lead data and proposes HubSpot upserts.
+  model_task: business
+  permissions:
+  - task:read
+  - knowledge:read
+  - crm:write
+  tools:
+  - hubspot_sync.upsert_contact
+  keywords:
+  - hubspot
+  - crm sync
+resources:
+  cpus: 0.25
+  memory_mb: 256
+  timeout_s: 20
+integrity:
+  hubspot_sync/__init__.py: a7a698e0d88ea0c85ea470a713fea3b94bef3324f4deed36192d59fcb8f653fe
+  hubspot_sync/plugin.py: ece3660da2f08b20c90df53fd58bffd267c0e82371d33fe1acd90bd1c1c519e7

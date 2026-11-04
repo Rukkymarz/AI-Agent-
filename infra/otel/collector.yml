@@ -1,0 +1,19 @@
+receivers:
+  otlp:
+    protocols: { grpc: { endpoint: 0.0.0.0:4317 }, http: { endpoint: 0.0.0.0:4318 } }
+processors:
+  batch: {}
+  attributes/scrub:
+    actions:
+      - { key: http.request.header.authorization, action: delete }
+      - { key: llm.prompt, action: delete }   # prompts go to Langfuse (access-controlled), not generic traces
+exporters:
+  prometheus: { endpoint: 0.0.0.0:8889 }
+  otlphttp/langfuse:
+    endpoint: http://langfuse:3000/api/public/otel
+    headers: { Authorization: "Basic ${env:LANGFUSE_OTEL_AUTH}" }
+  debug: { verbosity: basic }
+service:
+  pipelines:
+    traces: { receivers: [otlp], processors: [attributes/scrub, batch], exporters: [otlphttp/langfuse, debug] }
+    metrics: { receivers: [otlp], processors: [batch], exporters: [prometheus] }

@@ -1,0 +1,16 @@
+department: data
+agents:
+  - id: data-analyst
+    name: Data Analyst Agent
+    description: Ad-hoc analysis and SQL drafts (read-only replicas only).
+    model_task: coding
+    permissions: [task:read, knowledge:read]
+    tools: [sql.query_readonly]
+    keywords: [sql, query, cohort, funnel analysis, dataset, metrics]
+  - id: business-intelligence
+    name: Business Intelligence Agent
+    description: KPI dashboards, executive metric packs.
+    model_task: business
+    permissions: [task:read, knowledge:read]
+    tools: [report.publish]
+    keywords: [kpi, dashboard, bi, metrics pack, reporting]

@@ -1,0 +1,16 @@
+site_name: AICOMPANY-OS
+repo_url: https://github.com/aicompany-os/aicompany-os
+theme: { name: material, features: [navigation.sections, content.code.copy] }
+markdown_extensions: [admonition, tables, toc, pymdownx.superfences: { custom_fences: [{ name: mermaid, class: mermaid, format: !!python/name:pymdownx.superfences.fence_code_format }] }]
+nav:
+  - Home: ../README.md
+  - Architecture: ../ARCHITECTURE.md
+  - Installation: installation/INSTALL.md
+  - Plugins: plugins/README.md
+  - API: api.md
+  - Developer guide: developer/README.md
+  - Frontend: frontend.md
+  - Security:
+      - Threat model: security/threat-model.md
+      - GDPR/CCPA: security/gdpr-dsar.md
+docs_dir: docs

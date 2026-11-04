@@ -1,0 +1,3 @@
+apiVersion: 1
+providers:
+  - { name: aicos, folder: AICOMPANY-OS, type: file, options: { path: /etc/grafana/provisioning/dashboards } }

@@ -1,0 +1,48 @@
+department: engineering
+agents:
+  - id: engineering-manager
+    name: Engineering Manager Agent
+    description: Sprint planning, work breakdown, estimation, delivery risk.
+    model_task: reasoning
+    permissions: [task:read, knowledge:read, ticket:write]
+    tools: [ticket.create]
+    keywords: [sprint, estimate, backlog grooming, velocity, engineering plan]
+  - id: software-engineer
+    name: Software Engineer Agent
+    description: Implements features as pull requests in a sandbox. Cannot merge.
+    model_task: coding
+    permissions: [task:read, knowledge:read, code:pr_create]
+    tools: [code.pull_request]
+    keywords: [implement, feature, code, function, endpoint, typescript, python]
+    sandbox_profile: build
+    system_prompt: Small, reviewable diffs with tests. Every change ships as code.pull_request.
+  - id: code-review
+    name: Code Review Agent
+    description: Reviews PRs for correctness, security and maintainability. Advisory only.
+    model_task: coding
+    permissions: [task:read, knowledge:read]
+    tools: [code.review_comment]
+    keywords: [review, pull request review, code review, diff]
+  - id: qa-agent
+    name: QA Agent
+    description: Test plans, test generation, flaky-test triage.
+    model_task: coding
+    permissions: [task:read, knowledge:read, code:pr_create]
+    tools: [code.pull_request]
+    keywords: [test plan, unit test, e2e, regression, qa, coverage]
+    sandbox_profile: build
+  - id: bug-fix
+    name: Bug Fix Agent
+    description: Reproduces and fixes bugs; always includes a failing-then-passing test.
+    model_task: coding
+    permissions: [task:read, knowledge:read, code:pr_create, ticket:write]
+    tools: [code.pull_request, ticket.comment]
+    keywords: [bug, stack trace, exception, crash, regression fix, error]
+    sandbox_profile: build
+  - id: architecture-agent
+    name: Architecture Agent
+    description: System design reviews, dependency analysis, refactoring proposals.
+    model_task: reasoning
+    permissions: [task:read, knowledge:read]
+    tools: [adr.create]
+    keywords: [system design, refactor, coupling, dependency graph, scalability]

@@ -1,0 +1,217 @@
+{
+  "title": "AICOMPANY-OS Overview",
+  "uid": "aicos-overview",
+  "schemaVersion": 39,
+  "refresh": "30s",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "DS",
+        "type": "datasource",
+        "query": "prometheus"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Task throughput by status",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS}"
+      },
+      "targets": [
+        {
+          "expr": "sum by (status) (rate(aicos_tasks_total[5m]))",
+          "refId": "A",
+          "legendFormat": "{{agent}}{{model}}{{action}}{{status}}{{threat}}"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Task success rate",
+      "type": "stat",
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 6,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS}"
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(aicos_tasks_total{status=\"completed\"}[1h])) / clamp_min(sum(rate(aicos_tasks_total[1h])),1e-9)",
+          "refId": "A",
+          "legendFormat": "{{agent}}{{model}}{{action}}{{status}}{{threat}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit"
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "Firewall blocks",
+      "type": "stat",
+      "gridPos": {
+        "x": 18,
+        "y": 0,
+        "w": 6,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS}"
+      },
+      "targets": [
+        {
+          "expr": "sum by (threat) (increase(aicos_firewall_blocks_total[1h]))",
+          "refId": "A",
+          "legendFormat": "{{agent}}{{model}}{{action}}{{status}}{{threat}}"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Task latency p95 by agent",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS}"
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le, agent) (rate(aicos_task_seconds_bucket[5m])))",
+          "refId": "A",
+          "legendFormat": "{{agent}}{{model}}{{action}}{{status}}{{threat}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "id": 5,
+      "title": "LLM latency p95 by model",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS}"
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le, model) (rate(aicos_llm_seconds_bucket[5m])))",
+          "refId": "A",
+          "legendFormat": "{{agent}}{{model}}{{action}}{{status}}{{threat}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        }
+      }
+    },
+    {
+      "id": 6,
+      "title": "Tokens by model",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS}"
+      },
+      "targets": [
+        {
+          "expr": "sum by (model) (rate(aicos_llm_tokens_total[5m]))",
+          "refId": "A",
+          "legendFormat": "{{agent}}{{model}}{{action}}{{status}}{{threat}}"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "LLM cost (USD, 24h)",
+      "type": "bargauge",
+      "gridPos": {
+        "x": 12,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS}"
+      },
+      "targets": [
+        {
+          "expr": "sum by (model) (increase(aicos_llm_cost_usd_total[24h]))",
+          "refId": "A",
+          "legendFormat": "{{agent}}{{model}}{{action}}{{status}}{{threat}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD"
+        }
+      }
+    },
+    {
+      "id": 8,
+      "title": "Action outcomes",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 24,
+        "w": 24,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS}"
+      },
+      "targets": [
+        {
+          "expr": "sum by (action, status) (rate(aicos_actions_total[15m]))",
+          "refId": "A",
+          "legendFormat": "{{agent}}{{model}}{{action}}{{status}}{{threat}}"
+        }
+      ]
+    }
+  ]
+}

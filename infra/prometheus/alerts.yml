@@ -1,0 +1,28 @@
+groups:
+  - name: aicos
+    rules:
+      - alert: PromptInjectionSpike
+        expr: sum(rate(aicos_firewall_blocks_total[5m])) > 0.2
+        for: 5m
+        labels: { severity: warning }
+        annotations: { summary: "Prompt firewall blocking > 12/min — possible attack" }
+      - alert: AgentFailureRate
+        expr: sum(rate(aicos_tasks_total{status="failed"}[15m])) / clamp_min(sum(rate(aicos_tasks_total[15m])), 1e-9) > 0.1
+        for: 10m
+        labels: { severity: warning }
+        annotations: { summary: "More than 10% of agent tasks failing" }
+      - alert: ActionDeniedSpike
+        expr: sum(rate(aicos_actions_total{status="denied"}[10m])) > 0.1
+        for: 10m
+        labels: { severity: warning }
+        annotations: { summary: "Agents repeatedly proposing denied actions — review agent behaviour" }
+      - alert: LLMAllCandidatesFailing
+        expr: sum(rate(aicos_llm_requests_total{ok="false"}[5m])) > 0 and sum(rate(aicos_llm_requests_total{ok="true"}[5m])) == 0
+        for: 5m
+        labels: { severity: critical }
+        annotations: { summary: "No LLM calls succeeding — check Ollama" }
+      - alert: APIDown
+        expr: up{job="aicos-api"} == 0
+        for: 2m
+        labels: { severity: critical }
+        annotations: { summary: "AICOMPANY-OS API is down" }

@@ -1,0 +1,23 @@
+{
+  "name": "AICOS - Inbound lead form -> LeadFound (HMAC-signed)",
+  "nodes": [
+    {"parameters": {"httpMethod": "POST", "path": "lead-form", "responseMode": "onReceived"}, "name": "Form Webhook",
+     "type": "n8n-nodes-base.webhook", "typeVersion": 2, "position": [0, 0]},
+    {"parameters": {"jsCode": "const crypto = require('crypto');\nconst body = JSON.stringify({type: 'LeadFound', payload: {email: $json.body.email, company: $json.body.company, source: 'web-form'}});\nconst ts = Math.floor(Date.now()/1000).toString();\nconst nonce = crypto.randomBytes(16).toString('hex');\nconst path = '/v1/integrations/events';\nconst sts = ['POST', path, ts, nonce, crypto.createHash('sha256').update(body).digest('hex')].join('\\n');\nconst sig = crypto.createHmac('sha256', $env.AICOS_N8N_SIGNING_KEY).update(sts).digest('hex');\nreturn [{json: {body, headers: {'X-AICOS-Key-Id': 'n8n', 'X-AICOS-Timestamp': ts, 'X-AICOS-Nonce': nonce, 'X-AICOS-Signature': sig}}}];"},
+     "name": "Sign Request", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [220, 0]},
+    {"parameters": {"method": "POST", "url": "http://aicos-api:8000/v1/integrations/events", "sendHeaders": true,
+                    "headerParameters": {"parameters": [
+                      {"name": "Content-Type", "value": "application/json"},
+                      {"name": "X-AICOS-Key-Id", "value": "={{$json.headers['X-AICOS-Key-Id']}}"},
+                      {"name": "X-AICOS-Timestamp", "value": "={{$json.headers['X-AICOS-Timestamp']}}"},
+                      {"name": "X-AICOS-Nonce", "value": "={{$json.headers['X-AICOS-Nonce']}}"},
+                      {"name": "X-AICOS-Signature", "value": "={{$json.headers['X-AICOS-Signature']}}"}]},
+                    "sendBody": true, "contentType": "raw", "body": "={{$json.body}}"},
+     "name": "POST to AICOS", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4, "position": [440, 0]}
+  ],
+  "connections": {
+    "Form Webhook": {"main": [[{"node": "Sign Request", "type": "main", "index": 0}]]},
+    "Sign Request": {"main": [[{"node": "POST to AICOS", "type": "main", "index": 0}]]}
+  },
+  "settings": {"executionOrder": "v1"}
+}

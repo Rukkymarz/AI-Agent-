@@ -1,0 +1,39 @@
+rules:
+  - id: aicos-no-bypass-grant
+    message: Calling PolicyEngine.evaluate(..., grant_valid=True) outside approved execution paths bypasses human approval.
+    severity: ERROR
+    languages: [python]
+    patterns:
+      - pattern: $X.evaluate(..., grant_valid=True)
+      - pattern-not-inside: |
+          async def execute_approved(...): ...
+      - pattern-not-inside: |
+          async def install(...): ...
+    paths: { exclude: [tests/] }
+  - id: aicos-agent-forbidden-permission-literal
+    message: Agents must never be granted approval/policy/permission-management permissions.
+    severity: ERROR
+    languages: [yaml]
+    pattern-regex: 'permissions:\s*\[[^\]]*(approval:decide|policy:write|permission:change|user:delete|plugin:install)'
+    paths: { include: [agents/catalog/] }
+  - id: aicos-no-shell-true
+    message: subprocess with shell=True is forbidden.
+    severity: ERROR
+    languages: [python]
+    pattern: subprocess.$F(..., shell=True, ...)
+  - id: aicos-no-yaml-unsafe-load
+    message: Use yaml.safe_load.
+    severity: ERROR
+    languages: [python]
+    pattern: yaml.load(...)
+  - id: aicos-no-pickle
+    message: pickle is forbidden for untrusted data.
+    severity: ERROR
+    languages: [python]
+    pattern-either: [{ pattern: pickle.loads(...) }, { pattern: pickle.load(...) }]
+  - id: aicos-no-dev-auth-in-prod-path
+    message: DevAuthenticator must only be constructed by the app factory behind the env guard.
+    severity: WARNING
+    languages: [python]
+    pattern: DevAuthenticator(...)
+    paths: { exclude: [tests/, services/api/src/aicos_api/main.py] }

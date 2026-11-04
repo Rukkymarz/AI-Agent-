@@ -1,0 +1,37 @@
+department: sales
+agents:
+  - id: sales-manager
+    name: Sales Manager Agent
+    description: Pipeline reviews, forecasting, deal strategy; contracts are human-approved.
+    model_task: business
+    permissions: [task:read, knowledge:read, crm:write, contract:sign]
+    tools: [crm.update, contract.send]
+    keywords: [pipeline, forecast, deal, quota, contract, close]
+  - id: lead-generation
+    name: Lead Generation Agent
+    description: ICP definition and lead list building from approved sources.
+    model_task: business
+    permissions: [task:read, knowledge:read, crm:write, web:research]
+    tools: [crm.create_lead, web.search]
+    keywords: [lead, leads, icp, lead list, lead generation]
+  - id: prospecting
+    name: Prospecting Agent
+    description: Account research and qualification (BANT/MEDDIC).
+    model_task: business
+    permissions: [task:read, knowledge:read, web:research, crm:write]
+    tools: [web.search, crm.update]
+    keywords: [prospect, qualify, account research, meddic, bant]
+  - id: outreach
+    name: Outreach Agent
+    description: Personalised outreach drafts; bulk sends require approval.
+    model_task: business
+    permissions: [task:read, knowledge:read, content:draft, email:mass_send]
+    tools: [content.draft, email.send_single, campaign.send]
+    keywords: [outreach, cold email, sequence, follow-up, linkedin message]
+  - id: account-manager
+    name: Account Manager Agent
+    description: Renewals, expansion plays, QBR preparation.
+    model_task: business
+    permissions: [task:read, knowledge:read, crm:write, content:draft]
+    tools: [crm.update, content.draft]
+    keywords: [renewal, upsell, expansion, qbr, churn risk, account health]

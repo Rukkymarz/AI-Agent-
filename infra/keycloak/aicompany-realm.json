@@ -1,0 +1,142 @@
+{
+  "realm": "aicompany",
+  "enabled": true,
+  "displayName": "AICOMPANY-OS",
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "resetPasswordAllowed": true,
+  "rememberMe": false,
+  "bruteForceProtected": true,
+  "permanentLockout": false,
+  "failureFactor": 5,
+  "maxFailureWaitSeconds": 900,
+  "passwordPolicy": "length(14) and upperCase(1) and lowerCase(1) and digits(1) and specialChars(1) and notUsername and passwordHistory(5)",
+  "otpPolicyType": "totp",
+  "otpPolicyAlgorithm": "HmacSHA256",
+  "otpPolicyDigits": 6,
+  "otpPolicyPeriod": 30,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 43200,
+  "accessTokenLifespan": 300,
+  "requiredActions": [
+    {
+      "alias": "CONFIGURE_TOTP",
+      "name": "Configure OTP",
+      "providerId": "CONFIGURE_TOTP",
+      "enabled": true,
+      "defaultAction": true,
+      "priority": 10
+    }
+  ],
+  "roles": {
+    "realm": [
+      {
+        "name": "SuperAdmin",
+        "description": "AICOMPANY-OS SuperAdmin"
+      },
+      {
+        "name": "Admin",
+        "description": "AICOMPANY-OS Admin"
+      },
+      {
+        "name": "Manager",
+        "description": "AICOMPANY-OS Manager"
+      },
+      {
+        "name": "Operator",
+        "description": "AICOMPANY-OS Operator"
+      },
+      {
+        "name": "Reviewer",
+        "description": "AICOMPANY-OS Reviewer"
+      },
+      {
+        "name": "Viewer",
+        "description": "AICOMPANY-OS Viewer"
+      }
+    ]
+  },
+  "defaultRoles": [
+    "Viewer"
+  ],
+  "clients": [
+    {
+      "clientId": "aicos-api",
+      "name": "AICOMPANY-OS API",
+      "bearerOnly": true,
+      "enabled": true,
+      "protocol": "openid-connect"
+    },
+    {
+      "clientId": "aicos-console",
+      "name": "AICOMPANY-OS Console / Open WebUI",
+      "enabled": true,
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "${OPENWEBUI_OIDC_SECRET}",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "implicitFlowEnabled": false,
+      "redirectUris": [
+        "https://chat.${DOMAIN}/oauth/oidc/callback",
+        "https://console.${DOMAIN}/*"
+      ],
+      "webOrigins": [
+        "https://chat.${DOMAIN}",
+        "https://console.${DOMAIN}"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "https://chat.${DOMAIN}/*"
+      },
+      "protocolMappers": [
+        {
+          "name": "audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.client.audience": "aicos-api",
+            "access.token.claim": "true"
+          }
+        },
+        {
+          "name": "realm-roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "config": {
+            "claim.name": "realm_access.roles",
+            "multivalued": "true",
+            "access.token.claim": "true"
+          }
+        },
+        {
+          "name": "tenant",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "config": {
+            "user.attribute": "tenant",
+            "claim.name": "tenant",
+            "access.token.claim": "true"
+          }
+        },
+        {
+          "name": "amr",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-amr-mapper",
+          "config": {
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "aicos-n8n",
+      "name": "n8n service account",
+      "enabled": true,
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": false,
+      "publicClient": false,
+      "secret": "${N8N_OIDC_SECRET}"
+    }
+  ]
+}

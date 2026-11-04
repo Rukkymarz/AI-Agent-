@@ -1,0 +1,356 @@
+# AICOMPANY-OS — full self-hosted stack.
+#
+#   ./scripts/bootstrap.sh          # generates ./secrets/* and .env (first run only)
+#   docker compose up -d            # core stack
+#   docker compose --profile tools --profile search up -d   # + pgAdmin, SearXNG
+#
+# Network segmentation (zero-trust between tiers):
+#   aicos-edge     traefik <-> public UIs/API only
+#   aicos-backend  internal: data stores, identity, secrets — NO internet
+#   aicos-models   internal: ollama only reachable by api/worker/open-webui
+#   aicos-egress   sandboxed agents/plugins -> squid allow-list proxy -> internet
+#
+# Pin every image by digest before production (scripts/pin-images.sh).
+
+x-hardening: &hardening
+  restart: unless-stopped
+  security_opt: ["no-new-privileges:true"]
+  logging: { driver: json-file, options: { max-size: "20m", max-file: "5" } }
+
+x-aicos-env: &aicos-env
+  AICOS_ENV: ${AICOS_ENV:-production}
+  AICOS_SECRETS_DIR: /run/secrets
+  AICOS_TENANT_ID: ${AICOS_TENANT_ID:-default}
+  AICOS_AUTH_MODE: oidc
+  AICOS_OIDC_ISSUER: https://auth.${DOMAIN}/realms/aicompany
+  AICOS_OIDC_JWKS_URL: http://keycloak:8080/realms/aicompany/protocol/openid-connect/certs
+  AICOS_OIDC_AUDIENCE: aicos-api
+  AICOS_REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+  AICOS_OLLAMA_URL: http://ollama:11434
+  AICOS_VAULT_ADDR: ${VAULT_ADDR:-}
+  AICOS_VAULT_ROLE_ID: ${VAULT_ROLE_ID:-}
+  AICOS_TLS_ENABLED: "true"
+  AICOS_ENCRYPTION_AT_REST: ${ENCRYPTION_AT_REST:-false}
+  AICOS_EMBEDDING_MODEL: ${EMBEDDING_MODEL:-bge-m3}
+  AICOS_EMBEDDING_DIM: ${EMBEDDING_DIM:-1024}
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+  LANGFUSE_HOST: http://langfuse:3000
+
+networks:
+  aicos-edge: { name: aicos-edge }
+  aicos-backend: { name: aicos-backend, internal: true }
+  aicos-models: { name: aicos-models, internal: true }
+  aicos-egress: { name: aicos-egress, internal: true }
+  aicos-internet: { name: aicos-internet }
+
+volumes:
+  pg-data: {}
+  redis-data: {}
+  ollama-models: {}
+  openwebui-data: {}
+  vault-data: {}
+  n8n-data: {}
+  prometheus-data: {}
+  grafana-data: {}
+  letsencrypt: {}
+  worker-state: {}
+
+secrets:
+  pg_superuser_password: { file: ./secrets/pg_superuser_password }
+  pg_aicos_password: { file: ./secrets/pg_aicos_password }
+  pg_migrator_password: { file: ./secrets/pg_migrator_password }
+  pg_keycloak_password: { file: ./secrets/pg_keycloak_password }
+  pg_n8n_password: { file: ./secrets/pg_n8n_password }
+  pg_langfuse_password: { file: ./secrets/pg_langfuse_password }
+  aicos_database_url: { file: ./secrets/aicos_database_url }
+  aicos_audit_hmac_key: { file: ./secrets/aicos_audit_hmac_key }
+  aicos_approval_signing_key: { file: ./secrets/aicos_approval_signing_key }
+  aicos_service_signing_keys: { file: ./secrets/aicos_service_signing_keys }
+  n8n_signing_key: { file: ./secrets/n8n_signing_key }
+  vault_secret_id: { file: ./secrets/vault_secret_id }
+  keycloak_admin_password: { file: ./secrets/keycloak_admin_password }
+  grafana_admin_password: { file: ./secrets/grafana_admin_password }
+
+services:
+  # ------------------------------------------------------------------ edge
+  traefik:
+    <<: *hardening
+    image: traefik:${TRAEFIK_VERSION:-v3.1}
+    command: ["--configFile=/etc/traefik/traefik.yml", "--entryPoints.metrics.address=:8082"]
+    ports: ["80:80", "443:443"]
+    environment: { ACME_EMAIL: "${ACME_EMAIL}" }
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro   # only traefik; consider docker-socket-proxy
+      - ./infra/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./infra/traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
+      - letsencrypt:/letsencrypt
+    networks: [aicos-edge, aicos-backend, aicos-internet]
+    read_only: true
+
+  # ------------------------------------------------------------------ data
+  postgres:
+    <<: *hardening
+    image: pgvector/pgvector:${PGVECTOR_VERSION:-pg16}
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD_FILE: /run/secrets/pg_superuser_password
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --data-checksums"
+    command: ["postgres", "-c", "password_encryption=scram-sha-256", "-c", "shared_preload_libraries=pg_stat_statements",
+              "-c", "log_connections=on", "-c", "log_disconnections=on", "-c", "max_connections=200"]
+    secrets: [pg_superuser_password, pg_aicos_password, pg_migrator_password, pg_keycloak_password, pg_n8n_password, pg_langfuse_password]
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+      - ./infra/postgres/init:/docker-entrypoint-initdb.d:ro
+    networks: [aicos-backend]
+    healthcheck: { test: ["CMD-SHELL", "pg_isready -U postgres"], interval: 10s, timeout: 5s, retries: 10 }
+    shm_size: 512m
+
+  redis:
+    <<: *hardening
+    image: redis:${REDIS_VERSION:-7.4-alpine}
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}", "--appendonly", "yes", "--rename-command", "FLUSHALL", "",
+              "--rename-command", "FLUSHDB", "", "--rename-command", "CONFIG", "", "--protected-mode", "yes"]
+    volumes: [redis-data:/data]
+    networks: [aicos-backend]
+    healthcheck: { test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"], interval: 10s, timeout: 3s, retries: 10 }
+    read_only: true
+    tmpfs: [/tmp]
+
+  # ------------------------------------------------------------------ identity & secrets
+  keycloak:
+    <<: *hardening
+    image: quay.io/keycloak/keycloak:${KEYCLOAK_VERSION:-26.0}
+    command: ["start", "--import-realm", "--optimized=false"]
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: ${PG_KEYCLOAK_PASSWORD}
+      KC_HOSTNAME: https://auth.${DOMAIN}
+      KC_PROXY_HEADERS: xforwarded
+      KC_HTTP_ENABLED: "true"
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "true"
+      KC_BOOTSTRAP_ADMIN_USERNAME: kcadmin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      DOMAIN: ${DOMAIN}
+      OPENWEBUI_OIDC_SECRET: ${OPENWEBUI_OIDC_SECRET}
+      N8N_OIDC_SECRET: ${N8N_OIDC_SECRET}
+    volumes: [./infra/keycloak/aicompany-realm.json:/opt/keycloak/data/import/aicompany-realm.json:ro]
+    depends_on: { postgres: { condition: service_healthy } }
+    networks: [aicos-backend, aicos-edge]
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.keycloak.rule=Host(`auth.${DOMAIN}`)
+      - traefik.http.routers.keycloak.entrypoints=websecure
+      - traefik.http.services.keycloak.loadbalancer.server.port=8080
+
+  vault:
+    <<: *hardening
+    image: hashicorp/vault:${VAULT_VERSION:-1.18}
+    command: ["server", "-config=/vault/config/config.hcl"]
+    cap_add: [IPC_LOCK]
+    environment: { VAULT_ADDR: "https://127.0.0.1:8200", VAULT_SKIP_VERIFY: "${VAULT_SKIP_VERIFY:-false}" }
+    volumes:
+      - vault-data:/vault/data
+      - ./infra/vault/config.hcl:/vault/config/config.hcl:ro
+      - ./infra/vault/policies:/vault/policies:ro
+      - ./infra/vault/init.sh:/vault/init.sh:ro
+      - ./secrets/vault-tls:/vault/tls:ro
+    networks: [aicos-backend]
+
+  # ------------------------------------------------------------------ models
+  ollama:
+    <<: *hardening
+    image: ollama/ollama:${OLLAMA_VERSION:-0.5.7}
+    environment: { OLLAMA_KEEP_ALIVE: "30m", OLLAMA_NUM_PARALLEL: "4", OLLAMA_MAX_LOADED_MODELS: "3" }
+    volumes: [ollama-models:/root/.ollama]
+    networks: [aicos-models, aicos-internet]   # internet only for `ollama pull`; remove after models are cached
+    healthcheck: { test: ["CMD", "ollama", "list"], interval: 30s, timeout: 10s, retries: 5 }
+    # GPU (NVIDIA): uncomment
+    # deploy: { resources: { reservations: { devices: [{ driver: nvidia, count: all, capabilities: [gpu] }] } } }
+
+  # ------------------------------------------------------------------ platform
+  aicos-api:
+    <<: *hardening
+    build: { context: ., dockerfile: Dockerfile }
+    image: aicompany-os/api:${AICOS_VERSION:-0.1.0}
+    environment: *aicos-env
+    secrets: [aicos_database_url, aicos_audit_hmac_key, aicos_approval_signing_key, aicos_service_signing_keys, vault_secret_id]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    networks: [aicos-backend, aicos-models, aicos-edge]
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    deploy: { resources: { limits: { cpus: "2", memory: 2g } } }
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.api.rule=Host(`api.${DOMAIN}`)
+      - traefik.http.routers.api.entrypoints=websecure
+      - traefik.http.services.api.loadbalancer.server.port=8000
+
+  aicos-worker:
+    <<: *hardening
+    image: aicompany-os/api:${AICOS_VERSION:-0.1.0}
+    command: ["python", "/app/services/worker/worker.py"]
+    environment:
+      <<: *aicos-env
+      AICOS_N8N_WEBHOOK_URL: http://n8n:5678/webhook/aicos-approval
+      AICOS_AUDIT_ANCHOR_FILE: /var/lib/aicos/audit-anchor.jsonl
+    secrets: [aicos_database_url, aicos_audit_hmac_key, aicos_approval_signing_key, n8n_signing_key, vault_secret_id]
+    volumes: [worker-state:/var/lib/aicos, ./services/worker:/app/services/worker:ro]
+    depends_on: [aicos-api]
+    networks: [aicos-backend, aicos-models]
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+
+  egress-proxy:
+    <<: *hardening
+    image: ubuntu/squid:${SQUID_VERSION:-6.6-24.04_beta}
+    volumes:
+      - ./infra/egress-proxy/squid.conf:/etc/squid/squid.conf:ro
+      - ./infra/egress-proxy/allowlist.txt:/etc/squid/allowlist.txt:ro
+    networks: [aicos-egress, aicos-internet]
+
+  # ------------------------------------------------------------------ interfaces & automation
+  open-webui:
+    <<: *hardening
+    image: ghcr.io/open-webui/open-webui:${OPENWEBUI_VERSION:-v0.5.20}
+    environment:
+      OLLAMA_BASE_URL: http://ollama:11434
+      WEBUI_URL: https://chat.${DOMAIN}
+      ENABLE_SIGNUP: "false"
+      ENABLE_LOGIN_FORM: "false"
+      ENABLE_OAUTH_SIGNUP: "true"
+      OAUTH_PROVIDER_NAME: AICOMPANY-OS SSO
+      OPENID_PROVIDER_URL: https://auth.${DOMAIN}/realms/aicompany/.well-known/openid-configuration
+      OAUTH_CLIENT_ID: aicos-console
+      OAUTH_CLIENT_SECRET: ${OPENWEBUI_OIDC_SECRET}
+      OAUTH_SCOPES: openid email profile
+      ENABLE_OAUTH_ROLE_MANAGEMENT: "true"
+      OAUTH_ROLES_CLAIM: realm_access.roles
+      OAUTH_ADMIN_ROLES: SuperAdmin,Admin
+      OAUTH_ALLOWED_ROLES: SuperAdmin,Admin,Manager,Operator,Reviewer,Viewer
+      AICOS_API_URL: http://aicos-api:8000
+    volumes: [openwebui-data:/app/backend/data]
+    networks: [aicos-edge, aicos-models, aicos-backend]
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.webui.rule=Host(`chat.${DOMAIN}`)
+      - traefik.http.routers.webui.entrypoints=websecure
+      - traefik.http.services.webui.loadbalancer.server.port=8080
+
+  n8n:
+    <<: *hardening
+    image: n8nio/n8n:${N8N_VERSION:-1.80.0}
+    environment:
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: postgres
+      DB_POSTGRESDB_DATABASE: n8n
+      DB_POSTGRESDB_USER: n8n
+      DB_POSTGRESDB_PASSWORD: ${PG_N8N_PASSWORD}
+      N8N_HOST: flows.${DOMAIN}
+      N8N_PROTOCOL: https
+      WEBHOOK_URL: https://flows.${DOMAIN}/
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      N8N_PERSONALIZATION_ENABLED: "false"
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
+      AICOS_N8N_SIGNING_KEY: ${N8N_SIGNING_KEY}
+      NODE_FUNCTION_ALLOW_BUILTIN: crypto
+    volumes: [n8n-data:/home/node/.n8n, ./infra/n8n/workflows:/workflows:ro]
+    depends_on: { postgres: { condition: service_healthy } }
+    networks: [aicos-backend, aicos-edge, aicos-internet]
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.n8n.rule=Host(`flows.${DOMAIN}`)
+      - traefik.http.routers.n8n.entrypoints=websecure
+      - traefik.http.routers.n8n.middlewares=internal-only@file
+      - traefik.http.services.n8n.loadbalancer.server.port=5678
+
+  # ------------------------------------------------------------------ observability
+  langfuse:
+    <<: *hardening
+    image: langfuse/langfuse:${LANGFUSE_VERSION:-2}
+    environment:
+      DATABASE_URL: postgresql://langfuse:${PG_LANGFUSE_PASSWORD}@postgres:5432/langfuse
+      NEXTAUTH_URL: https://trace.${DOMAIN}
+      NEXTAUTH_SECRET: ${LANGFUSE_NEXTAUTH_SECRET}
+      SALT: ${LANGFUSE_SALT}
+      AUTH_DISABLE_SIGNUP: "true"
+      TELEMETRY_ENABLED: "false"
+    depends_on: { postgres: { condition: service_healthy } }
+    networks: [aicos-backend, aicos-edge]
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.langfuse.rule=Host(`trace.${DOMAIN}`)
+      - traefik.http.routers.langfuse.entrypoints=websecure
+      - traefik.http.routers.langfuse.middlewares=internal-only@file
+      - traefik.http.services.langfuse.loadbalancer.server.port=3000
+
+  otel-collector:
+    <<: *hardening
+    image: otel/opentelemetry-collector-contrib:${OTEL_VERSION:-0.115.0}
+    command: ["--config=/etc/otel/collector.yml"]
+    environment: { LANGFUSE_OTEL_AUTH: "${LANGFUSE_OTEL_AUTH:-}" }
+    volumes: [./infra/otel/collector.yml:/etc/otel/collector.yml:ro]
+    networks: [aicos-backend]
+
+  prometheus:
+    <<: *hardening
+    image: prom/prometheus:${PROMETHEUS_VERSION:-v2.55.1}
+    command: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.retention.time=30d", "--web.enable-lifecycle=false"]
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./infra/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus-data:/prometheus
+    networks: [aicos-backend]
+    read_only: true
+
+  grafana:
+    <<: *hardening
+    image: grafana/grafana:${GRAFANA_VERSION:-11.3.0}
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD__FILE: /run/secrets/grafana_admin_password
+      GF_SERVER_ROOT_URL: https://metrics.${DOMAIN}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_GENERIC_OAUTH_ENABLED: "true"
+      GF_AUTH_GENERIC_OAUTH_NAME: AICOMPANY-OS SSO
+      GF_AUTH_GENERIC_OAUTH_CLIENT_ID: aicos-console
+      GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET: ${OPENWEBUI_OIDC_SECRET}
+      GF_AUTH_GENERIC_OAUTH_AUTH_URL: https://auth.${DOMAIN}/realms/aicompany/protocol/openid-connect/auth
+      GF_AUTH_GENERIC_OAUTH_TOKEN_URL: http://keycloak:8080/realms/aicompany/protocol/openid-connect/token
+      GF_AUTH_GENERIC_OAUTH_API_URL: http://keycloak:8080/realms/aicompany/protocol/openid-connect/userinfo
+      GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_PATH: "contains(realm_access.roles[*], 'Admin') && 'Admin' || 'Viewer'"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+    secrets: [grafana_admin_password]
+    volumes: [grafana-data:/var/lib/grafana, ./infra/grafana/provisioning:/etc/grafana/provisioning:ro]
+    networks: [aicos-backend, aicos-edge]
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.grafana.rule=Host(`metrics.${DOMAIN}`)
+      - traefik.http.routers.grafana.entrypoints=websecure
+      - traefik.http.routers.grafana.middlewares=internal-only@file
+      - traefik.http.services.grafana.loadbalancer.server.port=3000
+
+  # ------------------------------------------------------------------ optional profiles
+  pgadmin:
+    <<: *hardening
+    profiles: [tools]
+    image: dpage/pgadmin4:${PGADMIN_VERSION:-8.13}
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+      PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION: "True"
+    networks: [aicos-backend]
+    ports: ["127.0.0.1:5050:80"]   # localhost only; tunnel via SSH
+
+  searxng:
+    <<: *hardening
+    profiles: [search]
+    image: searxng/searxng:${SEARXNG_VERSION:-latest}
+    environment: { SEARXNG_BASE_URL: "http://searxng:8080/", SEARXNG_SECRET: "${SEARXNG_SECRET}" }
+    networks: [aicos-backend, aicos-internet]

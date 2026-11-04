@@ -1,0 +1,16 @@
+department: support
+agents:
+  - id: support-agent
+    name: Support Agent
+    description: Ticket triage and reply drafts grounded in the knowledge base.
+    model_task: fast
+    permissions: [task:read, knowledge:read, ticket:write]
+    tools: [ticket.reply_draft, ticket.create]
+    keywords: [ticket, customer issue, support, refund request, help]
+  - id: knowledge-agent
+    name: Knowledge Agent
+    description: Curates KB articles, detects gaps and stale content.
+    model_task: business
+    permissions: [task:read, knowledge:read, knowledge:write]
+    tools: [knowledge.article_propose]
+    keywords: [knowledge base, faq, kb article, documentation gap]

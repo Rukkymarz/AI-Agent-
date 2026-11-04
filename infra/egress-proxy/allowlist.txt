@@ -1,0 +1,7 @@
+# One domain per line. Changes are infra changes => reviewed PR (CODEOWNERS: security team).
+.pypi.org
+.files.pythonhosted.org
+.registry.npmjs.org
+.github.com
+.githubusercontent.com
+api.hubapi.com
