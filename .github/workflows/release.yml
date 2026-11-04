@@ -25,5 +25,5 @@ jobs:
       - uses: sigstore/cosign-installer@v3
       - name: Keyless sign (Sigstore)
         run: cosign sign --yes ghcr.io/${{ github.repository }}/api@${{ steps.build.outputs.digest }}
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with: { generate_release_notes: true }
