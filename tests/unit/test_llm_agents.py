@@ -93,7 +93,7 @@ def test_router_from_yaml() -> None:
 
 def test_catalog_complete_and_valid() -> None:
     specs = load_catalog(ROOT / "agents/catalog")
-    assert len(specs) == 40
+    assert len(specs) == 56
     ids = {s.id for s in specs}
     assert {"ceo", "coo", "cto", "ciso", "cfo", "cmo", "deployment-agent", "seo-agent", "support-agent"} <= ids
     assert {s.department for s in specs} == set(Department)

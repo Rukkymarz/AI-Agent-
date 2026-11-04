@@ -29,12 +29,14 @@ dependencies = [
   "cryptography>=43",
   "pyjwt[crypto]>=2.9",
   "prometheus-client>=0.20",
+  "jinja2>=3.1",
 ]
 
 [project.optional-dependencies]
 postgres = ["psycopg[binary]>=3.2", "psycopg-pool>=3.2", "pgvector>=0.3"]
 redis = ["redis>=5.0"]
 knowledge = ["pypdf>=5", "python-docx>=1.1", "llama-index-core>=0.11"]
+revenue-docs = ["python-docx>=1.1", "weasyprint>=62"]
 langchain = ["langchain-core>=0.3", "langchain-ollama>=0.2"]
 observability = [
   "opentelemetry-sdk>=1.27",
@@ -58,10 +60,10 @@ dev = [
 aicos-plugin = "aicos.plugins.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["packages/core/src/aicos", "services/api/src/aicos_api"]
+packages = ["packages/core/src/aicos", "services/api/src/aicos_api", "revenueos/src/revenueos"]
 
 [tool.pytest.ini_options]
-pythonpath = ["packages/core/src", "services/api/src"]
+pythonpath = ["packages/core/src", "services/api/src", "revenueos/src"]
 testpaths = ["tests"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
@@ -72,7 +74,7 @@ markers = [
 addopts = "-m 'not integration' --strict-markers"
 
 [tool.coverage.run]
-source = ["aicos", "aicos_api"]
+source = ["aicos", "aicos_api", "revenueos"]
 branch = true
 omit = ["*/aicos/infrastructure/*"]  # covered by tests/integration against real services
 
@@ -85,7 +87,7 @@ exclude_lines = ["pragma: no cover", "if TYPE_CHECKING:", "raise NotImplementedE
 [tool.ruff]
 line-length = 140
 target-version = "py312"
-src = ["packages/core/src", "services/api/src", "tests"]
+src = ["packages/core/src", "services/api/src", "revenueos/src", "tests"]
 extend-exclude = ["plugins/examples", "plugins/installed"]  # signed artifacts: never auto-format
 
 [tool.ruff.lint]
@@ -99,7 +101,7 @@ ignore = ["PLR0913", "PLR2004", "PLR0911", "PLR0912", "PLR0915", "S101", "RUF012
 python_version = "3.12"
 strict = true
 plugins = ["pydantic.mypy"]
-mypy_path = ["packages/core/src", "services/api/src"]
+mypy_path = ["packages/core/src", "services/api/src", "revenueos/src"]
 explicit_package_bases = true
 ignore_missing_imports = true
 exclude = ["plugins/examples/"]

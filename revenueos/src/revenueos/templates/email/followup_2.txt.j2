@@ -1,0 +1,8 @@
+Hi {{ owner_name or "there" }},
+
+Would a quick 15-minute conversation be worthwhile? I'll walk you through the top opportunities for {{ business_name }}
+and the order I'd tackle them in. You keep the plan whether or not we work together.
+
+If the timing isn't right, no problem — just let me know.
+{% if cta_url %}{{ cta_label }}: {{ cta_url }}
+{% endif %}{% include "_footer.txt.j2" %}

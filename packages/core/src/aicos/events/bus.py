@@ -43,6 +43,7 @@ class EventType(StrEnum):
     SECURITY_ALERT = "SecurityAlert"
     PLUGIN_STATE_CHANGED = "PluginStateChanged"
     KNOWLEDGE_INGESTED = "KnowledgeIngested"
+    OPPORTUNITY_CREATED = "OpportunityCreated"
 
 
 _TYPE_RX = re.compile(r"^[A-Z][A-Za-z0-9]{1,63}(\.[A-Z][A-Za-z0-9]{2,63})?$")

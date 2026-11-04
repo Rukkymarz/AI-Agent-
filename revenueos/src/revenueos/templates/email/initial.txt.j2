@@ -1,0 +1,10 @@
+Hi {{ owner_name or "there" }},
+
+I reviewed {{ business_name }} and identified several opportunities related to:
+{% for item in opportunity_areas %}
+• {{ item }}{% endfor %}
+
+Would you like a complimentary summary report?
+{% if cta_url %}
+{{ cta_label }}: {{ cta_url }}
+{% endif %}{% include "_footer.txt.j2" %}

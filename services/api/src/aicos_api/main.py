@@ -83,7 +83,39 @@ def create_app(container: Container | None = None, authenticator: Authenticator 
     app.add_middleware(HardeningMiddleware, limiter=c.rate_limiter, max_body=c.settings.max_body_bytes, verifier=c.request_verifier)
     app.include_router(health)
     app.include_router(router)
+    _mount_revenueos(app, c)
     return app
+
+
+def _mount_revenueos(app: FastAPI, c: Container) -> None:
+    import hashlib
+    import hmac
+
+    from revenueos.api import mount
+    from revenueos.email import Mailer, OutboxMailer
+    from revenueos.service import RevenueOS
+
+    mailer: Mailer = OutboxMailer()
+    smtp_host = c.secrets.get("smtp_host")
+    if smtp_host:  # pragma: no cover - needs SMTP relay (Mailcow / Postal)
+        from revenueos.email import SMTPMailer
+
+        mailer = SMTPMailer(
+            smtp_host, int(c.secrets.get("smtp_port") or 587), c.secrets.get("smtp_username") or "", c.secrets.get("smtp_password") or ""
+        )
+    unsub_key = hmac.new(c.settings.key("approval_signing_key"), b"revenueos-unsubscribe", hashlib.sha256).digest()
+    mount(
+        app,
+        RevenueOS(
+            approvals=c.approvals,
+            policy=c.policy,
+            audit=c.audit,
+            bus=c.bus,
+            mailer=mailer,
+            unsubscribe_key=unsub_key,
+            tenant_id=c.settings.tenant_id,
+        ),
+    )
 
 
 def __getattr__(name: str) -> FastAPI:  # lazy module-level `app` for uvicorn

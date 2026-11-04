@@ -28,6 +28,9 @@ class Department(StrEnum):
     MARKETING = "marketing"
     SUPPORT = "support"
     DATA = "data"
+    MARKET_INTELLIGENCE = "market_intelligence"
+    LEAD_GENERATION = "lead_generation"
+    CLIENT_SUCCESS = "client_success"
 
 
 class AutonomyLevel(StrEnum):

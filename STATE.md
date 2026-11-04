@@ -1,9 +1,10 @@
 # STATE.md — AICOMPANY-OS
 
-_Last updated: 2026-11-04 · Session 1_
+_Last updated: 2026-11-04 · Session 1 (RevenueOS added on branch `feat/revenueos`)_
 
 ## Current target
-Governed, self-hosted multi-agent platform (MIT). v0.1.0 scaffold + tested governance core.
+**RevenueOS first** (user directive): find → score → outreach → follow-ups → pipeline → recurring MRR, on top of the governed AICOS core.
+Repo: https://github.com/Rukkymarz/AI-Agent- (main = core; `feat/revenueos` = RevenueOS).
 
 ## Verdict (binding until falsified)
 - **Build: GO on the governance core. NO-GO on positioning as a horizontal "AI company OS."**
@@ -21,9 +22,9 @@ Vault (AppRole, KV v2, transit), Traefik v3, n8n, Open WebUI (SSO + governed pip
 ## Verified this session
 | Gate | Result |
 |---|---|
-| Tests | 194 passed (unit, security, API, plugins, orchestrator e2e) · 3 integration tests skip without Postgres/Redis |
-| Coverage | 96.08 % (gate 80 %; `aicos/infrastructure` excluded → covered by CI integration job) |
-| mypy --strict | 0 issues / 62 files |
+| Tests | 258 passed (incl. 64 RevenueOS) — was 194 (unit, security, API, plugins, orchestrator e2e) · 3 integration tests skip without Postgres/Redis |
+| Coverage | 96.27 % (gate 80 %; `aicos/infrastructure` excluded → covered by CI integration job) |
+| mypy --strict | 0 issues / 73 files |
 | ruff lint + format | clean |
 | Live API (uvicorn) | 40 agents, routing, injection block, 401/403, security headers, metrics |
 | `docker compose config` | valid |
@@ -42,7 +43,17 @@ $0. Monthly run-rate estimate for a team deployment: one 24 GB-GPU box (~$150–
 6. Image tags in `.env.example` are best-effort defaults; run `scripts/pin-images.sh` before production.
 7. Action handlers default to an outbox; no real GitHub/CRM/email executors yet (HubSpot reference plugin only).
 
-## Next 3 actions
+## RevenueOS gaps
+- In-memory state (schema `002_revenueos.sql` ready, repository adapter not written) — **blocks real use**.
+- Discovery connectors + PageSpeed are stubs; leads must be imported/analyzed via API for now.
+- Cold-email legality differs by market (CAN-SPAM ok; CASL/GDPR restrictive) — legal review before EU/UK/CA sends.
+
+## Next 3 actions (superseded order)
+1. Postgres repository for RevenueOS (leads/campaigns/outreach/deals) so a restart loses nothing.
+2. Overpass + CSV lead import endpoint; PageSpeed key; send 50 real emails to one niche from a warmed secondary domain.
+3. Measure reply rate; kill threshold < 2% replies after 200 sends → change niche/offer, not tooling.
+
+## Previous next actions
 1. `git init`, push to GitHub, let CI run end-to-end (Docker build, Trivy, CodeQL, integration job). Fix whatever breaks.
 2. Close gaps 1–2 (persist tasks/plugins; event consumers out of the API process). Then deploy on one GPU box with real models.
 3. Run the AgentGate validation (below) **before** building more agents.

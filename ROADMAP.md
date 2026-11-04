@@ -1,5 +1,8 @@
 # Roadmap
 
+## Phase 1 (re-prioritised): RevenueOS — revenue first
+✅ lead model + 5-table schema · ✅ scoring rubric + grades · ✅ business analyzer · ✅ 7 responsive email templates · ✅ Day 1/3/7/14 follow-up engine with engagement branching · ✅ approval-gated campaigns, contracts, social posts · ✅ pipeline + MRR/ARR dashboard · ✅ proposals (MD/HTML/slides; DOCX/PDF optional) · ✅ 18 RevenueOS agents · 🟡 n8n tick/ESP/IMAP workflow · ⬜ Postgres repository · ⬜ discovery connectors (Overpass, CSV import, Places API) · ⬜ PageSpeed · ⬜ content/video/social generators
+
 Status legend: ✅ shipped & tested · 🟡 scaffolded (config/adapters present, needs live-infra hardening) · ⬜ planned
 
 ## Phase 1 — Foundation

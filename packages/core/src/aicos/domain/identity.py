@@ -46,6 +46,7 @@ class Permission(StrEnum):
     SECRET_READ = "secret:read"  # noqa: S105 - permission name
     DB_SCHEMA_CHANGE = "db:schema_change"
     EMAIL_MASS_SEND = "email:mass_send"
+    SOCIAL_PUBLISH = "social:publish"
     FINANCE_EXECUTE = "finance:execute"
     CONTRACT_SIGN = "contract:sign"
     CODE_MERGE = "code:merge"
@@ -64,6 +65,7 @@ CRITICAL_PERMISSIONS: frozenset[Permission] = frozenset(
         Permission.SECRET_READ,
         Permission.DB_SCHEMA_CHANGE,
         Permission.EMAIL_MASS_SEND,
+        Permission.SOCIAL_PUBLISH,
         Permission.FINANCE_EXECUTE,
         Permission.CONTRACT_SIGN,
         Permission.CODE_MERGE,

@@ -1,0 +1,10 @@
+Hi {{ owner_name or "there" }},
+
+Since you took a look, here's a sample from the audit I prepared for {{ business_name }} (health score: {{ health_score }}/100):
+{% for f in findings[:3] %}
+[{{ f.severity | upper }}] {{ f.finding }}
+   Fix: {{ f.recommendation }}{% endfor %}
+
+The full report has {{ findings | length }} findings with a prioritised 30/60/90-day plan.
+{% if cta_url %}{{ cta_label }}: {{ cta_url }}
+{% endif %}{% include "_footer.txt.j2" %}

@@ -32,6 +32,27 @@ agents:
     name: Social Media Agent
     description: Social post drafts and scheduling proposals.
     model_task: fast
-    permissions: [task:read, knowledge:read, content:draft]
-    tools: [content.draft, social.schedule]
+    permissions: [task:read, knowledge:read, content:draft, social:publish]
+    tools: [content.draft, social.schedule, social.post]
     keywords: [tweet, linkedin post, social, instagram, thread]
+  - id: ads-intelligence
+    name: Ads Intelligence Agent
+    description: Meta Ads Library, search visibility and competitor landing pages -> winning offers, ad angles, budgets.
+    model_task: reasoning
+    permissions: [task:read, knowledge:read, web:research]
+    tools: [web.search, report.publish]
+    keywords: [ads library, ad angles, winning offers, ad budget, competitor ads]
+  - id: marketing-strategist
+    name: Marketing Strategist Agent
+    description: 30/60/90-day plans across SEO, email, social, reviews, GBP, retargeting and content.
+    model_task: reasoning
+    permissions: [task:read, knowledge:read, content:draft]
+    tools: [content.draft, proposal.generate]
+    keywords: [30 day plan, 90 day plan, marketing plan, growth plan]
+  - id: video-studio
+    name: Video Studio Agent
+    description: Scripts, storyboards and short-form concepts (TikTok, Reels, Shorts, ad scripts); renders via FFmpeg/Remotion jobs.
+    model_task: business
+    permissions: [task:read, knowledge:read, content:draft]
+    tools: [video.script, content.draft]
+    keywords: [video script, tiktok, reels, shorts, storyboard, ad script]

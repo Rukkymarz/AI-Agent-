@@ -1,0 +1,30 @@
+department: client_success
+agents:
+  - id: onboarding
+    name: Onboarding Agent
+    description: Kickoff checklist, access collection, day-30 plan for new clients.
+    model_task: business
+    permissions: [task:read, knowledge:read, ticket:write, content:draft]
+    tools: [ticket.create, content.draft]
+    keywords: [onboarding, kickoff, new client setup]
+  - id: client-reporting
+    name: Reporting Agent
+    description: Monthly reports, quarterly reviews and ROI reports per client.
+    model_task: business
+    permissions: [task:read, knowledge:read, content:draft]
+    tools: [report.publish, content.draft]
+    keywords: [monthly report, quarterly review, qbr report, roi report]
+  - id: renewal
+    name: Renewal Agent
+    description: Flags renewal dates and churn risk; drafts renewal proposals (contracts are human-approved).
+    model_task: business
+    permissions: [task:read, knowledge:read, crm:write, contract:sign]
+    tools: [crm.update, contract.send]
+    keywords: [renewal opportunity, contract renewal, churn]
+  - id: upsell
+    name: Upsell Agent
+    description: Finds expansion opportunities from client performance data.
+    model_task: business
+    permissions: [task:read, knowledge:read, crm:write, content:draft]
+    tools: [crm.update, content.draft, proposal.generate]
+    keywords: [upsell, cross-sell, expansion opportunity, upgrade package]

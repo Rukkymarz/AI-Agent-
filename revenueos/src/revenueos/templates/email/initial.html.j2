@@ -1,0 +1,13 @@
+{% extends "_base.html.j2" %}
+{% block preheader %}A few growth opportunities I noticed for {{ business_name }}{% endblock %}
+{% block body %}
+<p style="margin:0 0 16px 0">Hi {{ owner_name or "there" }},</p>
+<p style="margin:0 0 16px 0">I reviewed <strong>{{ business_name }}</strong> and identified several opportunities related to:</p>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px 0">
+  {% for item in opportunity_areas %}
+  <tr><td valign="top" style="padding:4px 10px 4px 0;color:{{ brand.primary_color }};font-size:18px">&#8226;</td>
+      <td style="padding:4px 0">{{ item }}</td></tr>
+  {% endfor %}
+</table>
+<p style="margin:0">Would you like a complimentary summary report?</p>
+{% endblock %}

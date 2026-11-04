@@ -1,0 +1,10 @@
+Hi {{ owner_name or "there" }},
+
+Following up on the opportunities we identified for {{ business_name }}. A {{ case_study.industry }} business in
+{{ case_study.location }} had a very similar picture. Here's what changed in {{ case_study.timeframe }}:
+{% for metric in case_study.results %}
+- {{ metric.value }} {{ metric.label }}{% endfor %}
+
+I can map out what the same plan would look like for {{ business_name }}.
+{% if cta_url %}{{ cta_label }}: {{ cta_url }}
+{% endif %}{% include "_footer.txt.j2" %}

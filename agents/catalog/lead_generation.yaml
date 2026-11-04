@@ -1,0 +1,32 @@
+department: lead_generation
+agents:
+  - id: business-discovery
+    name: Business Discovery Agent
+    description: Finds businesses by category and location from permitted public sources (OSM, official APIs, CSV imports).
+    model_task: fast
+    permissions: [task:read, knowledge:read, web:research, crm:write]
+    tools: [web.search, crm.create_lead]
+    keywords: [find businesses, discover businesses, business list, local businesses]
+    system_prompt: Use only sources whose terms permit collection. Never scrape sites that prohibit it. Business contact data only.
+  - id: lead-qualification
+    name: Lead Qualification Agent
+    description: Applies the RevenueOS scoring rubric and ICP; assigns Platinum/Gold/Silver/Bronze/Ignore.
+    model_task: business
+    permissions: [task:read, knowledge:read, crm:write]
+    tools: [crm.update]
+    keywords: [qualify lead, lead score, lead grade, icp fit]
+  - id: contact-enrichment
+    name: Contact Enrichment Agent
+    description: Finds the public business contact (owner/role address) and validates deliverability.
+    model_task: fast
+    permissions: [task:read, knowledge:read, web:research, crm:write]
+    tools: [web.search, crm.update]
+    keywords: [enrich contact, owner email, decision maker]
+    system_prompt: Business-published contacts only. No personal emails, no purchased lists, no guessing patterns for EU contacts.
+  - id: website-analysis
+    name: Website Analysis Agent
+    description: Runs the Business Analyzer (SEO, speed, CTA, mobile, chat, pixels, content) and narrates findings.
+    model_task: business
+    permissions: [task:read, knowledge:read, web:research, crm:write]
+    tools: [web.search, crm.update, report.publish]
+    keywords: [website audit, analyze website, seo audit, site speed]

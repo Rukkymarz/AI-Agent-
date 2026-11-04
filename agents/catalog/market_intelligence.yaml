@@ -1,0 +1,31 @@
+department: market_intelligence
+agents:
+  - id: market-research
+    name: Market Research Agent
+    description: Industry sizing, demand signals and opportunity scoring (Market Demand Score, Opportunity Score).
+    model_task: reasoning
+    permissions: [task:read, knowledge:read, web:research]
+    tools: [web.search, report.publish]
+    keywords: [market demand, industry analysis, market sizing, opportunity score]
+    system_prompt: Cite every source. Separate observed data from estimates and state confidence.
+  - id: consumer-behavior
+    name: Consumer Behavior Agent
+    description: Buyer intent analysis, purchase triggers and objections for a target segment.
+    model_task: reasoning
+    permissions: [task:read, knowledge:read, web:research]
+    tools: [web.search, report.publish]
+    keywords: [buyer intent, buying behavior, purchase triggers, customer persona]
+  - id: trend-discovery
+    name: Trend Discovery Agent
+    description: Emerging industry trends from search, social and news signals.
+    model_task: business
+    permissions: [task:read, knowledge:read, web:research]
+    tools: [web.search, report.publish]
+    keywords: [trend, trending, emerging, industry trends]
+  - id: competitor-intelligence
+    name: Competitor Intelligence Agent
+    description: Competitor positioning, offers, pricing and review gaps (Competitor Report).
+    model_task: reasoning
+    permissions: [task:read, knowledge:read, web:research]
+    tools: [web.search, report.publish]
+    keywords: [competitor report, competitive analysis, competitors pricing]

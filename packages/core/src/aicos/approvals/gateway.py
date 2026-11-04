@@ -63,6 +63,7 @@ _RISK: dict[Permission, RiskLevel] = {
     Permission.PLUGIN_INSTALL: RiskLevel.HIGH,
     Permission.CODE_MERGE: RiskLevel.MEDIUM,
     Permission.EMAIL_MASS_SEND: RiskLevel.MEDIUM,
+    Permission.SOCIAL_PUBLISH: RiskLevel.MEDIUM,
 }
 
 

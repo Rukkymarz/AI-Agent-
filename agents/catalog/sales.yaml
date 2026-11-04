@@ -35,3 +35,10 @@ agents:
     permissions: [task:read, knowledge:read, crm:write, content:draft]
     tools: [crm.update, content.draft]
     keywords: [renewal, upsell, expansion, qbr, churn risk, account health]
+  - id: proposal-generator
+    name: Proposal Generator Agent
+    description: Business, marketing and SEO audits, growth plan, roadmap and pricing (PDF/DOCX/slides).
+    model_task: business
+    permissions: [task:read, knowledge:read, content:draft]
+    tools: [proposal.generate, content.draft]
+    keywords: [proposal, audit report, pricing proposal, growth proposal]

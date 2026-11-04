@@ -1,0 +1,15 @@
+{% extends "_base.html.j2" %}
+{% block preheader %}How a {{ case_study.industry }} business fixed the same gaps{% endblock %}
+{% block body %}
+<p style="margin:0 0 16px 0">Hi {{ owner_name or "there" }},</p>
+<p style="margin:0 0 16px 0">Following up on the opportunities we identified for {{ business_name }}. A {{ case_study.industry }} business
+in {{ case_study.location }} had a very similar picture. Here's what changed in {{ case_study.timeframe }}:</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px 0;border-collapse:separate;border-spacing:0 8px">
+  {% for metric in case_study.results %}
+  <tr><td style="padding:12px 16px;background:#f3f4f6;border-radius:8px">
+    <strong style="color:{{ brand.primary_color }};font-size:20px">{{ metric.value }}</strong>&nbsp; {{ metric.label }}
+  </td></tr>
+  {% endfor %}
+</table>
+<p style="margin:0">I can map out what the same plan would look like for {{ business_name }}.</p>
+{% endblock %}

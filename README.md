@@ -1,6 +1,6 @@
 # AICOMPANY-OS
 
-**A self-hosted, governed AI workforce.** 40 department agents (executive → engineering → sales → support)
+**A self-hosted, governed AI workforce with a built-in Revenue OS.** 56 department agents (executive → engineering → sales → support)
 that can *propose* anything and *do* nothing without passing RBAC, policy, human approval and an immutable audit trail.
 
 [![ci](https://github.com/aicompany-os/aicompany-os/actions/workflows/ci.yml/badge.svg)](.github/workflows/ci.yml)
@@ -38,6 +38,7 @@ only through policy.
 | Event bus (in-memory + Redis Streams) | ✅ / integration-tested in CI | `aicos/events`, `aicos/infrastructure` |
 | **Plugin system** (signed, capability-based, approval-gated, auto-suspend) | ✅ tested | `aicos/plugins`, [docs](docs/plugins/README.md) |
 | Agent sandbox profiles (non-root, ro, cap-drop, no-net / egress proxy, gVisor) | ✅ tested | `aicos/sandbox` |
+| **RevenueOS**: lead scoring, business analyzer, 7 email templates, Day 1/3/7/14 follow-ups, governed campaigns, pipeline, MRR dashboard, proposals | ✅ tested | `revenueos/`, [docs](docs/revenueos/README.md) |
 | Compliance evidence (SOC2, NIST CSF 2.0, OWASP LLM, GDPR, CCPA) | ✅ tested | `aicos/compliance` |
 | FastAPI service (OIDC/Keycloak, HMAC service auth, rate limit, body limit, security headers) | ✅ tested | `services/api` |
 | Full stack compose (Traefik, Postgres, Redis, Ollama, Open WebUI, Keycloak, Vault, n8n, Langfuse, OTel, Prometheus, Grafana) | ✅ `docker compose config` valid | `docker-compose.yml` |

@@ -1,0 +1,44 @@
+{
+  "name": "RevenueOS - follow-up engine tick + ESP events (HMAC-signed)",
+  "nodes": [
+    {"parameters": {"rule": {"interval": [{"field": "minutes", "minutesInterval": 5}]}}, "name": "Every 5 min",
+     "type": "n8n-nodes-base.scheduleTrigger", "typeVersion": 1, "position": [0, 0]},
+    {"parameters": {"jsCode": "const crypto=require('crypto');const path='/v1/integrations/revenue/tick';const body='';const ts=Math.floor(Date.now()/1000).toString();const nonce=crypto.randomBytes(16).toString('hex');const sts=['POST',path,ts,nonce,crypto.createHash('sha256').update(body).digest('hex')].join('\\n');return [{json:{path,body,ts,nonce,sig:crypto.createHmac('sha256',$env.AICOS_N8N_SIGNING_KEY).update(sts).digest('hex')}}];"},
+     "name": "Sign tick", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [220, 0]},
+    {"parameters": {"method": "POST", "url": "=http://aicos-api:8000{{$json.path}}", "sendHeaders": true,
+                    "headerParameters": {"parameters": [{"name": "X-AICOS-Key-Id", "value": "n8n"}, {"name": "X-AICOS-Timestamp", "value": "={{$json.ts}}"},
+                                                        {"name": "X-AICOS-Nonce", "value": "={{$json.nonce}}"}, {"name": "X-AICOS-Signature", "value": "={{$json.sig}}"}]}},
+     "name": "POST tick", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4, "position": [440, 0]},
+
+    {"parameters": {"httpMethod": "POST", "path": "postal-events", "authentication": "headerAuth", "responseMode": "onReceived"},
+     "name": "Postal webhook", "type": "n8n-nodes-base.webhook", "typeVersion": 2, "position": [0, 220]},
+    {"parameters": {"jsCode": "const crypto=require('crypto');const m={MessageSent:'delivered',MessageLoaded:'opened',MessageLinkClicked:'clicked',MessageBounced:'bounced',MessageDeliveryFailed:'bounced'};const e=$json.body.event;if(!m[e])return [];const p=$json.body.payload||{};const msg=p.original_message||p.message||{};const body=JSON.stringify({event:m[e],message_id:msg.message_id?('<'+msg.message_id.replace(/[<>]/g,'')+'>'):null,email:msg.to||null});const path='/v1/integrations/revenue/email-events';const ts=Math.floor(Date.now()/1000).toString();const nonce=crypto.randomBytes(16).toString('hex');const sts=['POST',path,ts,nonce,crypto.createHash('sha256').update(body).digest('hex')].join('\\n');return [{json:{path,body,ts,nonce,sig:crypto.createHmac('sha256',$env.AICOS_N8N_SIGNING_KEY).update(sts).digest('hex')}}];"},
+     "name": "Map + sign event", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [220, 220]},
+    {"parameters": {"method": "POST", "url": "=http://aicos-api:8000{{$json.path}}", "sendHeaders": true,
+                    "headerParameters": {"parameters": [{"name": "Content-Type", "value": "application/json"}, {"name": "X-AICOS-Key-Id", "value": "n8n"},
+                                                        {"name": "X-AICOS-Timestamp", "value": "={{$json.ts}}"}, {"name": "X-AICOS-Nonce", "value": "={{$json.nonce}}"},
+                                                        {"name": "X-AICOS-Signature", "value": "={{$json.sig}}"}]},
+                    "sendBody": true, "contentType": "raw", "body": "={{$json.body}}"},
+     "name": "POST event", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4, "position": [440, 220]},
+
+    {"parameters": {"mailbox": "INBOX", "options": {"customEmailConfig": "[\"UNSEEN\"]"}}, "name": "Reply inbox (IMAP)",
+     "type": "n8n-nodes-base.emailReadImap", "typeVersion": 2, "position": [0, 440]},
+    {"parameters": {"jsCode": "const crypto=require('crypto');const h=$json.headers||{};const irt=(h['in-reply-to']||'').trim();const auto=/auto-submitted|out of office|automatic reply/i.test(JSON.stringify(h)+($json.subject||''));const unsub=/\\b(unsubscribe|remove me|stop emailing)\\b/i.test($json.text||'');const event=unsub?'unsubscribed':(auto?null:'replied');if(!event)return [];const from=($json.from||'').match(/[^<\\s]+@[^>\\s]+/);const body=JSON.stringify({event,message_id:irt||null,email:from?from[0]:null});const path='/v1/integrations/revenue/email-events';const ts=Math.floor(Date.now()/1000).toString();const nonce=crypto.randomBytes(16).toString('hex');const sts=['POST',path,ts,nonce,crypto.createHash('sha256').update(body).digest('hex')].join('\\n');return [{json:{path,body,ts,nonce,sig:crypto.createHmac('sha256',$env.AICOS_N8N_SIGNING_KEY).update(sts).digest('hex')}}];"},
+     "name": "Detect reply / unsubscribe", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [220, 440]},
+    {"parameters": {"method": "POST", "url": "=http://aicos-api:8000{{$json.path}}", "sendHeaders": true,
+                    "headerParameters": {"parameters": [{"name": "Content-Type", "value": "application/json"}, {"name": "X-AICOS-Key-Id", "value": "n8n"},
+                                                        {"name": "X-AICOS-Timestamp", "value": "={{$json.ts}}"}, {"name": "X-AICOS-Nonce", "value": "={{$json.nonce}}"},
+                                                        {"name": "X-AICOS-Signature", "value": "={{$json.sig}}"}]},
+                    "sendBody": true, "contentType": "raw", "body": "={{$json.body}}"},
+     "name": "POST reply", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4, "position": [440, 440]}
+  ],
+  "connections": {
+    "Every 5 min": {"main": [[{"node": "Sign tick", "type": "main", "index": 0}]]},
+    "Sign tick": {"main": [[{"node": "POST tick", "type": "main", "index": 0}]]},
+    "Postal webhook": {"main": [[{"node": "Map + sign event", "type": "main", "index": 0}]]},
+    "Map + sign event": {"main": [[{"node": "POST event", "type": "main", "index": 0}]]},
+    "Reply inbox (IMAP)": {"main": [[{"node": "Detect reply / unsubscribe", "type": "main", "index": 0}]]},
+    "Detect reply / unsubscribe": {"main": [[{"node": "POST reply", "type": "main", "index": 0}]]}
+  },
+  "settings": {"executionOrder": "v1"}
+}

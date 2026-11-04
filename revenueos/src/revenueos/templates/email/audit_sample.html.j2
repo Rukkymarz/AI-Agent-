@@ -1,0 +1,16 @@
+{% extends "_base.html.j2" %}
+{% block preheader %}3 findings from the {{ business_name }} audit{% endblock %}
+{% block body %}
+<p style="margin:0 0 16px 0">Hi {{ owner_name or "there" }},</p>
+<p style="margin:0 0 16px 0">Since you took a look, here's a sample from the audit I prepared for {{ business_name }}
+(health score: <strong>{{ health_score }}/100</strong>):</p>
+{% for f in findings[:3] %}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 12px 0">
+  <tr><td style="padding:14px 16px;border-left:4px solid {% if f.severity == 'high' %}#dc2626{% elif f.severity == 'medium' %}#f59e0b{% else %}#10b981{% endif %};background:#f9fafb;border-radius:4px">
+    <strong>{{ f.finding }}</strong><br>
+    <span class="muted" style="font-size:14px">Fix: {{ f.recommendation }}</span>
+  </td></tr>
+</table>
+{% endfor %}
+<p style="margin:16px 0 0 0">The full report has {{ findings | length }} findings with a prioritised 30/60/90-day plan.</p>
+{% endblock %}

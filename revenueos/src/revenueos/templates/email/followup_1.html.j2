@@ -1,0 +1,8 @@
+{% extends "_base.html.j2" %}
+{% block preheader %}The short version, in case my last note got buried{% endblock %}
+{% block body %}
+<p style="margin:0 0 16px 0">Hi {{ owner_name or "there" }},</p>
+<p style="margin:0 0 16px 0">Following up on my note about {{ business_name }}. The short version: the biggest quick win I found was
+<strong>{{ top_finding.finding | lower }}</strong> — {{ top_finding.recommendation | lower }}.</p>
+<p style="margin:0">Happy to send the full summary (it's free, no strings attached). Just reply "yes".</p>
+{% endblock %}

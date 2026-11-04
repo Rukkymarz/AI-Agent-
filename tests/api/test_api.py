@@ -33,7 +33,7 @@ def test_health_and_security_headers(client: TestClient) -> None:
     assert client.get("/healthz", headers={"X-Request-Id": "abcdefgh1234"}).headers["x-request-id"] == "abcdefgh1234"
     assert client.get("/healthz", headers={"X-Request-Id": "<script>"}).headers["x-request-id"] != "<script>"
     ready = client.get("/readyz").json()
-    assert ready["audit_chain_valid"] and ready["agents"] == 40
+    assert ready["audit_chain_valid"] and ready["agents"] == 56
     assert b"aicos_" in client.get("/metrics").content or client.get("/metrics").status_code == 200
 
 
@@ -54,7 +54,7 @@ def test_rbac_enforced(client: TestClient) -> None:
     assert client.get("/v1/audit", headers=OP).status_code == 403
     assert client.get("/v1/agents/ceo", headers=VIEW).json()["department"] == "executive"
     assert client.get("/v1/agents/nope", headers=VIEW).status_code == 404
-    assert len(client.get("/v1/agents?department=sales", headers=VIEW).json()) == 5
+    assert len(client.get("/v1/agents?department=sales", headers=VIEW).json()) == 6
 
 
 def test_task_and_injection(client: TestClient, script: Script) -> None:
